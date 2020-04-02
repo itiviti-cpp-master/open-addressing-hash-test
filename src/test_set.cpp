@@ -22,6 +22,11 @@ struct BadHashingHashSetTest : ::testing::Test
     HashSet<std::string, Policy, BadHash> set;
 };
 
+struct ComplexConstructionHashSetTest : ::testing::Test
+{
+    HashSet<std::string> set;
+};
+
 template <class T>
 struct HashSetTest
     : ::testing::Test
@@ -502,4 +507,27 @@ TYPED_TEST(BadHashingHashSetTest, insert_with_collisions)
     for (std::size_t i = 0; i < this->set.bucket_count(); ++i) {
         EXPECT_GE(1, this->set.bucket_size(i));
     }
+}
+
+TEST_F(ComplexConstructionHashSetTest, emplace)
+{
+    const std::vector<std::string_view> elements = {
+        "The",
+        "quick",
+        "brown fox",
+        "jumps",
+        "over",
+        "the",
+        "lazy dog"
+    };
+    for (const auto s : elements) {
+        set.emplace(s.data(), s.size());
+    }
+    const std::string s_copy("copy");
+    std::string s_move("move");
+    set.emplace(s_copy);
+    set.emplace(std::move(s_move));
+    EXPECT_TRUE(set.contains("quick"));
+    EXPECT_TRUE(set.contains("copy"));
+    EXPECT_TRUE(set.contains("move"));
 }

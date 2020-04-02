@@ -21,6 +21,11 @@ struct BadHashingHashMapTest : ::testing::Test
     HashMap<std::string, std::size_t, Policy, BadHash> map;
 };
 
+struct ComplexConstructionHashMapTest : ::testing::Test
+{
+    HashMap<std::string, std::string> map;
+};
+
 template <class T, class Key>
 struct HashMapTestT : ::testing::Test
 {
@@ -605,6 +610,25 @@ TEST_F(CountingHashMapTest, try_emplace)
     EXPECT_EQ(0, ConstructionAware::move_assignment_calls_count());
 }
 
+TEST_F(CountingHashMapTest, indexed_access)
+{
+    ConstructionAware::reset_counters();
+    map.reserve(2);
+    const auto & x = map[1];
+    EXPECT_EQ(0, x.value());
+    EXPECT_EQ(1, ConstructionAware::constructor_calls_count());
+    EXPECT_EQ(0, ConstructionAware::copy_constructor_calls_count());
+    EXPECT_EQ(0, ConstructionAware::move_constructor_calls_count());
+    EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
+    EXPECT_EQ(0, ConstructionAware::move_assignment_calls_count());
+    map[2] = ConstructionAware(3);
+    EXPECT_EQ(3, ConstructionAware::constructor_calls_count());
+    EXPECT_EQ(0, ConstructionAware::copy_constructor_calls_count());
+    EXPECT_EQ(0, ConstructionAware::move_constructor_calls_count());
+    EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
+    EXPECT_EQ(1, ConstructionAware::move_assignment_calls_count());
+}
+
 TEST_F(CountingHashMapTest, copy)
 {
     ConstructionAware::reset_counters();
@@ -668,4 +692,30 @@ TEST_F(CountingHashMapTest, swap)
     EXPECT_EQ(0, ConstructionAware::move_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_assignment_calls_count());
+}
+
+TEST_F(ComplexConstructionHashMapTest, emplace)
+{
+    map.emplace("Hello", "world");
+    map.emplace(std::make_pair("Have a", "nice day"));
+    map.emplace(std::piecewise_construct,
+            std::forward_as_tuple("Give me", 4),
+            std::forward_as_tuple("a hand", 7));
+    EXPECT_FALSE(map.contains("Give me"));
+    EXPECT_EQ("world", map.at("Hello"));
+    EXPECT_EQ(std::string("a hand", 7), map.at("Give"));
+    EXPECT_EQ("nice day", map.at("Have a"));
+}
+
+TEST_F(ComplexConstructionHashMapTest, try_emplace)
+{
+    map.try_emplace("Nice", "weather");
+    map.try_emplace("Nice", "evening", 8);
+    map.try_emplace("Summernight", "city", 4);
+    map.try_emplace(std::string("Clavicula", 5), std::string("nox"));
+    map.try_emplace(map.end(), "The", "eldest cosmonaut", 6);
+    EXPECT_EQ("weather", map.at("Nice"));
+    EXPECT_EQ("city", map.at("Summernight"));
+    EXPECT_EQ("nox", map.at("Clavi"));
+    EXPECT_EQ("eldest", map.at("The"));
 }

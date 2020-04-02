@@ -34,7 +34,7 @@ public:
     static std::size_t move_assignment_calls_count()
     { return move_assignment_calls; }
 
-    ConstructionAware(const int data)
+    ConstructionAware(const int data = 0)
         : m_data(data)
     { ++constructor_calls; }
     ConstructionAware(const ConstructionAware & other)
