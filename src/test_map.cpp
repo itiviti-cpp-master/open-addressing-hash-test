@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <list>
+#include <mutex>
 #include <random>
 #include <set>
 #include <thread>
