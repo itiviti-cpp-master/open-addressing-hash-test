@@ -5,6 +5,7 @@
 
 #include <set>
 #include <string>
+#include <utility>
 #include <type_traits>
 
 using namespace test_utils;
@@ -25,6 +26,22 @@ struct BadHashingHashSetTest : ::testing::Test
 struct ComplexConstructionHashSetTest : ::testing::Test
 {
     HashSet<std::string> set;
+};
+
+struct EvenMoreComplexConstructionHashSetTest : ::testing::Test
+{
+    struct PairHash : std::hash<std::string>
+    {
+        using super = std::hash<std::string>;
+
+        std::size_t operator() (const std::pair<std::string, std::string> & p) const
+        {
+            // warning: NOT a good hash computation here
+            return super::operator() (p.first) ^ super::operator() (p.second);
+        }
+    };
+
+    HashSet<std::pair<std::string, std::string>, QuadraticProbing, PairHash> set;
 };
 
 template <class T>
@@ -469,7 +486,7 @@ TEST_F(CountingHashSetTest, swap)
     EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_assignment_calls_count());
     decltype(set) another;
-    another.swap(std::move(set));
+    another.swap(set);
     EXPECT_EQ(max, ConstructionAware::constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_constructor_calls_count());
@@ -527,7 +544,30 @@ TEST_F(ComplexConstructionHashSetTest, emplace)
     std::string s_move("move");
     set.emplace(s_copy);
     set.emplace(std::move(s_move));
+    const std::string_view s_view("view");
+    set.emplace(s_view);
+
     EXPECT_TRUE(set.contains("quick"));
     EXPECT_TRUE(set.contains("copy"));
     EXPECT_TRUE(set.contains("move"));
+    EXPECT_TRUE(set.contains("view"));
+}
+
+TEST_F(EvenMoreComplexConstructionHashSetTest, emplace)
+{
+    const std::string_view s1{"You"}, s2{"And a"};
+    const std::string s3{"total lack of motivation"};
+    set.emplace(std::pair<std::string, std::string>{"feel", "frustration"});
+    set.emplace(std::piecewise_construct,
+            std::forward_as_tuple(s1.data(), s1.size()),
+            std::forward_as_tuple("must", 4));
+    set.emplace(std::piecewise_construct,
+            std::forward_as_tuple(s2),
+            std::forward_as_tuple(s3, 6));
+
+    using P = std::pair<std::string, std::string>;
+    EXPECT_TRUE(set.contains(P{"You", "must"}));
+    EXPECT_TRUE(set.contains(P{"feel", "frustration"}));
+    EXPECT_TRUE(set.contains(P{"And a", "lack of motivation"}));
+    EXPECT_FALSE(set.contains(P{"And the joy", "you need restricted and delayed"}));
 }

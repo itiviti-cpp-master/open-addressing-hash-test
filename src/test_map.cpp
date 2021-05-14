@@ -3,7 +3,11 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <list>
+#include <random>
 #include <set>
+#include <thread>
 #include <type_traits>
 
 using namespace test_utils;
@@ -462,6 +466,74 @@ TYPED_TEST(HashMapTest, indexed_access)
     }
 }
 
+TYPED_TEST(HashMapTest_CopyableElems, parallel_access)
+{
+    const int max = 1001;
+    for (int i = 0; i < max; ++i) {
+        this->emplace(i);
+    }
+
+    using Key = decltype(this->keys.create(0));
+    const std::size_t threads_count = 8;
+    std::vector<std::vector<Key>> patterns(threads_count, std::vector<Key>{});
+    std::mt19937_64 gen(11111);
+    for (std::size_t n = 0; n < threads_count; ++n) {
+        auto & p = patterns[n];
+        p.reserve(max);
+        for (int i = 0; i < max; ++i) {
+            p.emplace_back(this->keys.create(i));
+        }
+        std::shuffle(p.begin(), p.end(), gen);
+    }
+    std::list<std::size_t> results;
+    std::mutex mutex;
+    std::vector<std::thread> threads;
+    threads.reserve(threads_count);
+    for (std::size_t i = 0; i < threads_count; ++i) {
+        threads.emplace_back([&map = this->map, &keys = patterns[i], &results, &mutex] {
+                auto copy = map; // NOLINT
+                std::size_t equal = 0;
+                for (const auto key : keys) {
+                    const auto & value = copy[key];
+                    const auto it = map.find(key);
+                    if (it != map.end() && it->second == value) {
+                        ++equal;
+                    }
+                }
+                std::lock_guard lock(mutex);
+                results.push_back(equal);
+            });
+    }
+    for (auto & t : threads) {
+        t.join();
+    }
+    EXPECT_EQ(threads_count, results.size());
+    for (const auto x : results) {
+        EXPECT_EQ(max, x) << "expected to have all elements in both the original and copied maps";
+    }
+}
+
+TYPED_TEST(HashMapTest_CopyableElems, load_test)
+{
+    const int max = 1299827;
+    long long sum = 0;
+    for (int i = 0; i < max; ++i) {
+        this->emplace(i);
+        sum += i;
+    }
+
+    const std::size_t N = 331;
+    sum *= N;
+    long long check_sum = 0;
+    for (std::size_t n = 0; n < N; ++n) {
+        auto copy = this->map; // NOLINT
+        for (int i = max; i > 0; --i) {
+            check_sum += this->values.value(copy[this->keys.create(i)]);
+        }
+    }
+    EXPECT_EQ(sum, check_sum);
+}
+
 TYPED_TEST(HashMapTest_CopyableElems, insert_range)
 {
     using Value = typename std::remove_pointer_t<decltype(this)>::Value;
@@ -686,7 +758,7 @@ TEST_F(CountingHashMapTest, swap)
     EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_assignment_calls_count());
     decltype(map) another;
-    another.swap(std::move(map));
+    another.swap(map);
     EXPECT_EQ(max, ConstructionAware::constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_constructor_calls_count());
