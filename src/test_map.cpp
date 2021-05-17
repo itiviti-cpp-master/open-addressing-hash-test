@@ -574,7 +574,7 @@ TYPED_TEST(HashMapTest_CopyableElems, assign_from_initializer_list)
             this->emplace(i);
         }
     }
-    this->map = {this->copy(9999), this->copy(11111), this->copy(33333), this->copy(55555)};
+    this->map = {this->create(9999), this->create(11111), this->create(33333), this->create(55555)};
     EXPECT_FALSE(this->map.contains(this->keys.create(0)));
     EXPECT_FALSE(this->map.contains(this->keys.create(-11)));
     EXPECT_FALSE(this->map.contains(this->keys.create(-111)));
