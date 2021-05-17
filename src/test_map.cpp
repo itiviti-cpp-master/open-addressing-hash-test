@@ -518,18 +518,38 @@ TYPED_TEST(HashMapTest_CopyableElems, load_test)
 {
     const int max = 1299827;
     long long sum = 0;
+    std::vector<TypeParam> keys;
+    keys.reserve(max);
     for (int i = 0; i < max; ++i) {
         this->emplace(i);
         sum += i;
+        keys.emplace_back(this->keys.create(i));
     }
 
-    const std::size_t N = 331;
+    const std::size_t N = 113;
     sum *= N;
     long long check_sum = 0;
     for (std::size_t n = 0; n < N; ++n) {
         auto copy = this->map; // NOLINT
-        for (int i = max; i > 0; --i) {
-            check_sum += this->values.value(copy[this->keys.create(i)]);
+        for (auto it = keys.rbegin(), end = keys.rend(); it != end; ++it) {
+            // operator[]
+            check_sum += copy[*it];
+
+            // find
+            ++it;
+            if (it == end) {
+                break;
+            }
+            const auto m_it = copy.find(*it);
+            ASSERT_NE(m_it, copy.end());
+            check_sum += m_it->second;
+
+            // at
+            ++it;
+            if (it == end) {
+                break;
+            }
+            check_sum += copy.at(*it);
         }
     }
     EXPECT_EQ(sum, check_sum);
@@ -544,6 +564,27 @@ TYPED_TEST(HashMapTest_CopyableElems, insert_range)
     }
     this->map.insert(elements.begin(), elements.end());
     EXPECT_EQ(elements.size(), this->map.size());
+}
+
+TYPED_TEST(HashMapTest_CopyableElems, assign_from_initializer_list)
+{
+    {
+        const int max = 1111;
+        for (int i = -max/2; i < max/2; ++i) {
+            this->emplace(i);
+        }
+    }
+    this->map = {this->copy(9999), this->copy(11111), this->copy(33333), this->copy(55555)};
+    EXPECT_FALSE(this->map.contains(this->keys.create(0)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(-11)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(-111)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(111)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(533)));
+    EXPECT_TRUE(this->map.contains(this->keys.create(9999)));
+    EXPECT_TRUE(this->map.contains(this->keys.create(11111)));
+    EXPECT_TRUE(this->map.contains(this->keys.create(33333)));
+    EXPECT_TRUE(this->map.contains(this->keys.create(55555)));
+    EXPECT_EQ(4, this->map.size());
 }
 
 TYPED_TEST(BadHashingHashMapTest, insert_with_collisions)
