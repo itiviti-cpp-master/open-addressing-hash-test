@@ -171,6 +171,47 @@ TYPED_TEST(HashSetTest, many)
     }
 }
 
+TYPED_TEST(HashSetTest, move_construct)
+{
+    const int max = 1777;
+    for (int i = 0; i < max; ++i) {
+        this->set.emplace(this->create(i));
+    }
+    HashSet<TypeParam> to_set = std::move(this->set);
+    this->set.clear();
+    this->set.emplace(this->create(-15));
+    this->set.emplace(this->create(-22));
+    this->set.emplace(this->create(-37));
+    EXPECT_EQ(max, to_set.size());
+    EXPECT_EQ(3, this->set.size());
+    EXPECT_TRUE(this->set.contains(this->create(-37)));
+    EXPECT_TRUE(this->set.contains(this->create(-22)));
+    EXPECT_TRUE(this->set.contains(this->create(-15)));
+    for (int i = max; i > 0; --i) {
+        EXPECT_TRUE(to_set.contains(this->create(i-1)));
+    }
+}
+
+TYPED_TEST(HashSetTest, move_assign)
+{
+    HashSet<TypeParam> from_set;
+    const int max = 997;
+    for (int i = 0; i < max; ++i) {
+        from_set.emplace(this->create(i));
+    }
+    this->set = std::move(from_set);
+    from_set.clear();
+    from_set.emplace(this->create(-115));
+    from_set.emplace(this->create(22222));
+    EXPECT_EQ(max, this->set.size());
+    EXPECT_EQ(2, from_set.size());
+    EXPECT_TRUE(from_set.contains(this->create(-115)));
+    EXPECT_TRUE(from_set.contains(this->create(22222)));
+    for (int i = max; i > 0; --i) {
+        EXPECT_TRUE(this->set.contains(this->create(i-1)));
+    }
+}
+
 TYPED_TEST(HashSetTest, iter_through)
 {
     const auto max = 1009;
@@ -363,6 +404,47 @@ TYPED_TEST(HashSetTest_CopyableElems, insert_range)
     }
     this->set.insert(elements.begin(), elements.end());
     EXPECT_EQ(elements.size(), this->set.size());
+}
+
+TYPED_TEST(HashSetTest_CopyableElems, copy_construct)
+{
+    const int max = 1003;
+    for (int i = 0; i < max; ++i) {
+        this->set.emplace(this->create(i));
+    }
+    HashSet<TypeParam> to_set = this->set;
+    for (int i = 0; i < max; i += 2) {
+        this->set.erase(this->create(i));
+    }
+    EXPECT_EQ(max, to_set.size());
+    EXPECT_EQ(max / 2, this->set.size());
+    for (int i = 0; i < max-1; i += 2) {
+        EXPECT_TRUE(this->set.contains(this->create(i+1))) << (i+1);
+    }
+    for (int i = max; i > 0; --i) {
+        EXPECT_TRUE(to_set.contains(this->create(i-1)));
+    }
+}
+
+TYPED_TEST(HashSetTest_CopyableElems, copy_assign)
+{
+    HashSet<TypeParam> from_set;
+    const int max = 99111;
+    for (int i = 0; i < max; ++i) {
+        from_set.emplace(this->create(i));
+    }
+    this->set = from_set;
+    for (int i = 0; i < max; i += 2) {
+        from_set.erase(this->create(i));
+    }
+    EXPECT_EQ(max, this->set.size());
+    EXPECT_EQ(max / 2, from_set.size());
+    for (int i = 0; i < max-1; i += 2) {
+        EXPECT_TRUE(from_set.contains(this->create(i+1))) << (i+1);
+    }
+    for (int i = max; i > 0; --i) {
+        EXPECT_TRUE(this->set.contains(this->create(i-1)));
+    }
 }
 
 TEST_F(CountingHashSetTest, insert)

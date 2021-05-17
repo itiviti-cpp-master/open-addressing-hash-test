@@ -196,6 +196,62 @@ TYPED_TEST(HashMapTest, many)
     }
 }
 
+TYPED_TEST(HashMapTest, move_construct)
+{
+    using Map = std::remove_reference_t<decltype(this->map)>;
+    const int max = 7777;
+    for (int i = 0; i < max; ++i) {
+        this->emplace(i);
+    }
+    Map to_map = std::move(this->map);
+    this->map.clear();
+    this->emplace(-3);
+    this->emplace(3);
+    this->emplace(-11);
+    this->emplace(15);
+    EXPECT_EQ(4, this->map.size());
+    EXPECT_EQ(max, to_map.size());
+    EXPECT_TRUE(this->map.contains(this->keys.create(3)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(4)));
+    EXPECT_TRUE(this->map.contains(this->keys.create(-3)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(0)));
+    EXPECT_TRUE(this->map.contains(this->keys.create(-11)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(10)));
+    EXPECT_TRUE(this->map.contains(this->keys.create(15)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(14)));
+    for (int i = max; i > 0; --i) {
+        EXPECT_TRUE(to_map.contains(this->keys.create(i-1)));
+    }
+}
+
+TYPED_TEST(HashMapTest, move_assign)
+{
+    using Map = std::remove_reference_t<decltype(this->map)>;
+    Map from_map;
+    const int max = 7777;
+    for (int i = 0; i < max; ++i) {
+        from_map.emplace(this->create(i));
+    }
+    this->emplace(-9);
+    this->emplace(-1);
+    this->emplace(-29);
+    this->map = std::move(from_map);
+    from_map.clear();
+    from_map.emplace(this->create(-5));
+    from_map.emplace(this->create(5));
+    EXPECT_EQ(max, this->map.size());
+    EXPECT_EQ(2, from_map.size());
+    EXPECT_TRUE(from_map.contains(this->keys.create(-5)));
+    EXPECT_TRUE(from_map.contains(this->keys.create(5)));
+    EXPECT_FALSE(from_map.contains(this->keys.create(15)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(-1)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(-9)));
+    EXPECT_FALSE(this->map.contains(this->keys.create(-29)));
+    for (int i = max; i > 0; --i) {
+        EXPECT_TRUE(this->map.contains(this->keys.create(i-1)));
+    }
+}
+
 TYPED_TEST(HashMapTest, iter_through)
 {
     const auto max = 797;
