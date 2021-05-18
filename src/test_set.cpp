@@ -178,7 +178,7 @@ TYPED_TEST(HashSetTest, move_construct)
         this->set.emplace(this->create(i));
     }
     HashSet<TypeParam> to_set = std::move(this->set);
-    this->set.clear();
+    this->set = HashSet<TypeParam>{};
     this->set.emplace(this->create(-15));
     this->set.emplace(this->create(-22));
     this->set.emplace(this->create(-37));
@@ -200,7 +200,7 @@ TYPED_TEST(HashSetTest, move_assign)
         from_set.emplace(this->create(i));
     }
     this->set = std::move(from_set);
-    from_set.clear();
+    from_set = HashSet<TypeParam>{};
     from_set.emplace(this->create(-115));
     from_set.emplace(this->create(22222));
     EXPECT_EQ(max, this->set.size());
@@ -399,7 +399,9 @@ TYPED_TEST(HashSetTest, no_iterator_invalidation)
 TYPED_TEST(HashSetTest_CopyableElems, insert_range)
 {
     std::vector<TypeParam> elements;
-    for (int i = 0; i < 9999; ++i) {
+    const int max = 9991;
+    elements.reserve(max);
+    for (int i = 0; i < max; ++i) {
         elements.push_back(this->create(i));
     }
     this->set.insert(elements.begin(), elements.end());
