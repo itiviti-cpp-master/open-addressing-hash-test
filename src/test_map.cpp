@@ -582,7 +582,7 @@ TYPED_TEST(HashMapTest_CopyableElems, load_test)
         keys.emplace_back(this->keys.create(i));
     }
 
-    const std::size_t N = 113;
+    const std::size_t N = 239;
     sum *= N;
     long long check_sum = 0;
     for (std::size_t n = 0; n < N; ++n) {
