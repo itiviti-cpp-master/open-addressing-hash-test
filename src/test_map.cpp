@@ -204,7 +204,7 @@ TYPED_TEST(HashMapTest, move_construct)
         this->emplace(i);
     }
     Map to_map = std::move(this->map);
-    this->map.clear();
+    this->map = Map{};
     this->emplace(-3);
     this->emplace(3);
     this->emplace(-11);
@@ -236,7 +236,7 @@ TYPED_TEST(HashMapTest, move_assign)
     this->emplace(-1);
     this->emplace(-29);
     this->map = std::move(from_map);
-    from_map.clear();
+    from_map = Map{};
     from_map.emplace(this->create(-5));
     from_map.emplace(this->create(5));
     EXPECT_EQ(max, this->map.size());
@@ -615,7 +615,9 @@ TYPED_TEST(HashMapTest_CopyableElems, insert_range)
 {
     using Value = typename std::remove_pointer_t<decltype(this)>::Value;
     std::vector<Value> elements;
-    for (int i = 0; i < 9999; ++i) {
+    const int max = 9999;
+    elements.reserve(max);
+    for (int i = 0; i < max; ++i) {
         elements.push_back(this->create(i));
     }
     this->map.insert(elements.begin(), elements.end());
@@ -873,7 +875,7 @@ TEST_F(ComplexConstructionHashMapTest, emplace)
             std::forward_as_tuple("a hand", 7));
     EXPECT_FALSE(map.contains("Give me"));
     EXPECT_EQ("world", map.at("Hello"));
-    EXPECT_EQ(std::string("a hand", 7), map.at("Give"));
+    EXPECT_EQ(std::string("a hand\0", 7), map.at("Give"));
     EXPECT_EQ("nice day", map.at("Have a"));
 }
 
