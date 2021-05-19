@@ -34,56 +34,56 @@ public:
     static std::size_t move_assignment_calls_count()
     { return move_assignment_calls; }
 
-    ConstructionAware(const int data = 0)
+    ConstructionAware(const int data = 0) noexcept
         : m_data(data)
     { ++constructor_calls; }
     ConstructionAware(const ConstructionAware & other)
         : m_data(other.m_data)
     { ++copy_constructor_calls; }
-    ConstructionAware(ConstructionAware && other)
+    ConstructionAware(ConstructionAware && other) noexcept
         : m_data(other.m_data)
     { ++move_constructor_calls; }
-    ConstructionAware & operator = (const ConstructionAware & other)
+    ConstructionAware & operator = (const ConstructionAware & other) noexcept
     {
         m_data = other.m_data;
         ++copy_assignment_calls;
         return *this;
     }
-    ConstructionAware & operator = (ConstructionAware && other)
+    ConstructionAware & operator = (ConstructionAware && other) noexcept
     {
         m_data = other.m_data;
         ++move_assignment_calls;
         return *this;
     }
 
-    int value() const
+    int value() const noexcept
     { return m_data; }
 
-    friend bool operator == (const ConstructionAware & lhs, const ConstructionAware & rhs)
+    friend bool operator == (const ConstructionAware & lhs, const ConstructionAware & rhs) noexcept
     { return lhs.value() == rhs.value(); }
 };
 
 struct CustomHash : std::hash<int>
 {
-    std::size_t operator() (const ConstructionAware & x) const
+    std::size_t operator() (const ConstructionAware & x) const noexcept
     { return std::hash<int>::operator() (x.value()); }
-    std::size_t operator() (const int x) const
+    std::size_t operator() (const int x) const noexcept
     { return std::hash<int>::operator() (x); }
 };
 
 struct CustomEqual
 {
-    bool operator () (const ConstructionAware & lhs, const ConstructionAware & rhs) const
+    bool operator () (const ConstructionAware & lhs, const ConstructionAware & rhs) const noexcept
     { return lhs.value() == rhs.value(); }
-    bool operator() (const ConstructionAware & lhs, const int rhs) const
+    bool operator() (const ConstructionAware & lhs, const int rhs) const noexcept
     { return lhs.value() == rhs; }
-    bool operator () (const int lhs, const ConstructionAware & rhs) const
+    bool operator () (const int lhs, const ConstructionAware & rhs) const noexcept
     { return lhs == rhs.value(); }
 };
 
 struct BadHash
 {
-    std::size_t operator() (const std::string & x) const
+    std::size_t operator() (const std::string & x) const noexcept
     { return x.size(); }
 };
 
@@ -91,28 +91,28 @@ class NonCopyable
 {
     int m_data = 0;
 public:
-    NonCopyable() = default;
-    NonCopyable(const int data) : m_data(data) {}
+    NonCopyable() noexcept = default;
+    NonCopyable(const int data) noexcept : m_data(data) {}
     NonCopyable(const NonCopyable &) = delete;
-    NonCopyable(NonCopyable &&) = default;
-    NonCopyable & operator = (NonCopyable &&) = default;
+    NonCopyable(NonCopyable &&) noexcept = default;
+    NonCopyable & operator = (NonCopyable &&) noexcept = default;
 
-    operator int () const { return m_data; }
-    NonCopyable & operator = (const int value)
+    operator int () const noexcept { return m_data; }
+    NonCopyable & operator = (const int value) noexcept
     {
         m_data = value;
         return *this;
     }
 
-    NonCopyable & operator *= (const NonCopyable & other)
+    NonCopyable & operator *= (const NonCopyable & other) noexcept
     {
         m_data *= other.m_data;
         return *this;
     }
 
-    int value() const { return m_data; }
+    int value() const noexcept { return m_data; }
 
-    friend bool operator == (const int lhs, const NonCopyable & rhs)
+    friend bool operator == (const int lhs, const NonCopyable & rhs) noexcept
     { return lhs == rhs.m_data; }
 };
 
@@ -192,7 +192,7 @@ namespace std {
 template <>
 struct hash<test_utils::NonCopyable> : std::hash<int>
 {
-    std::size_t operator () (const test_utils::NonCopyable & x) const
+    std::size_t operator () (const test_utils::NonCopyable & x) const noexcept
     {
         return std::hash<int>::operator () (x.value());
     }
