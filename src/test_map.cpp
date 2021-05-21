@@ -904,5 +904,5 @@ TEST_F(ComplexConstructionHashMapTest, try_emplace)
     EXPECT_EQ("eldest", map.at("The"));
 }
 
-using TypesToTest = ::testing::Types<HashMapTestT<NonCopyable, std::string>>;
+using TypesToTest = ::testing::Types<HashMapTestT<std::string, std::string>>;
 INSTANTIATE_TYPED_TEST_SUITE_P(HashMap, IteratorTest, TypesToTest);

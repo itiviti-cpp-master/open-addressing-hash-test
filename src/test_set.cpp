@@ -667,5 +667,5 @@ TEST_F(EvenMoreComplexConstructionHashSetTest, emplace)
     EXPECT_FALSE(set.contains(P{"And the joy", "you need restricted and delayed"}));
 }
 
-using TypesToTest = ::testing::Types<HashSetTest<NonCopyable>>;
+using TypesToTest = ::testing::Types<HashSetTest<std::string>>;
 INSTANTIATE_TYPED_TEST_SUITE_P(HashSet, IteratorTest, TypesToTest);
