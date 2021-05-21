@@ -1,5 +1,6 @@
 #include "hash_set.h"
 #include "utils.h"
+#include "test_iterator.h"
 
 #include <gtest/gtest.h>
 
