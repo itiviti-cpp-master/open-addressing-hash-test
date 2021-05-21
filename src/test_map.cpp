@@ -1,5 +1,6 @@
 #include "hash_map.h"
 #include "utils.h"
+#include "test_iterator.h"
 
 #include <gtest/gtest.h>
 
@@ -61,6 +62,17 @@ struct HashMapTestT : ::testing::Test
 
     using Map = HashMap<Key, T>;
     Map map;
+
+    // Initialize sample data for generic iterator tests
+    Map & not_empty_container()
+    {
+        if (map.empty()) {
+            for (int i = 0; i < 991; ++i) {
+                emplace(i);
+            }
+        }
+        return map;
+    }
 };
 
 template <class Key>
@@ -531,7 +543,7 @@ TYPED_TEST(HashMapTest_CopyableElems, parallel_access)
     }
 
     using Key = decltype(this->keys.create(0));
-    const std::size_t threads_count = 8;
+    const std::size_t threads_count = 6;
     std::vector<std::vector<Key>> patterns(threads_count, std::vector<Key>{});
     std::mt19937_64 gen(11111);
     for (std::size_t n = 0; n < threads_count; ++n) {
@@ -891,3 +903,6 @@ TEST_F(ComplexConstructionHashMapTest, try_emplace)
     EXPECT_EQ("nox", map.at("Clavi"));
     EXPECT_EQ("eldest", map.at("The"));
 }
+
+using TypesToTest = ::testing::Types<HashMapTestT<NonCopyable, std::string>>;
+INSTANTIATE_TYPED_TEST_SUITE_P(HashMap, IteratorTest, TypesToTest);

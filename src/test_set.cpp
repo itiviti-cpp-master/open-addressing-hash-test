@@ -51,6 +51,17 @@ struct HashSetTest
 {
     using Set = HashSet<T>;
     Set set;
+
+    // Initialize sample data for generic iterator tests
+    Set & not_empty_container()
+    {
+        if (set.empty()) {
+            for (int i = 0; i < 1003; ++i) {
+                set.emplace(this->create(i));
+            }
+        }
+        return set;
+    }
 };
 
 template <class T>
@@ -655,3 +666,6 @@ TEST_F(EvenMoreComplexConstructionHashSetTest, emplace)
     EXPECT_TRUE(set.contains(P{"And a", "lack of motivation"}));
     EXPECT_FALSE(set.contains(P{"And the joy", "you need restricted and delayed"}));
 }
+
+using TypesToTest = ::testing::Types<HashSetTest<NonCopyable>>;
+INSTANTIATE_TYPED_TEST_SUITE_P(HashSet, IteratorTest, TypesToTest);
