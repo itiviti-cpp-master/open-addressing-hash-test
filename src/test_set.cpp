@@ -538,9 +538,10 @@ TEST_F(CountingHashSetTest, copy)
     EXPECT_GE(max, ConstructionAware::move_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_assignment_calls_count());
+    ConstructionAware::reset_counters();
     decltype(set) another = set;
     EXPECT_EQ(set, another);
-    EXPECT_EQ(max, ConstructionAware::constructor_calls_count());
+    EXPECT_GE(max, ConstructionAware::constructor_calls_count());
     EXPECT_EQ(max, ConstructionAware::copy_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
@@ -560,8 +561,9 @@ TEST_F(CountingHashSetTest, move)
     EXPECT_GE(max, ConstructionAware::move_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_assignment_calls_count());
+    ConstructionAware::reset_counters();
     decltype(set) another = std::move(set);
-    EXPECT_EQ(max, ConstructionAware::constructor_calls_count());
+    EXPECT_EQ(0, ConstructionAware::constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
@@ -581,9 +583,10 @@ TEST_F(CountingHashSetTest, swap)
     EXPECT_GE(max, ConstructionAware::move_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_assignment_calls_count());
+    ConstructionAware::reset_counters();
     decltype(set) another;
     another.swap(set);
-    EXPECT_EQ(max, ConstructionAware::constructor_calls_count());
+    EXPECT_EQ(0, ConstructionAware::constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::move_constructor_calls_count());
     EXPECT_EQ(0, ConstructionAware::copy_assignment_calls_count());
